@@ -21,8 +21,3 @@ app = create_app()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
-
-git remote set-url origin https://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@github.com/bridge-yt/Bridge.git
-
-git@github.com:bridge-yt/Bridge.git
-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
