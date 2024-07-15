@@ -48,16 +48,16 @@ bridge/
 ## Commands to Create the Project Structure:
 
 ```bash
-mkdir -p bridge/api
-mkdir -p bridge/migrations
-mkdir -p bridge/db
-touch bridge/api/app.py
-touch bridge/api/models.py
-touch bridge/api/__init__.py
-touch bridge/api/requirements.txt
-touch bridge/api/config.py
-touch bridge/api/routes.py
-touch bridge/db/init.sql
+mkdir -p Helm-bridge-plugin/api
+mkdir -p Helm-bridge-plugin/migrations
+mkdir -p Helm-bridge-plugin/db
+touch Helm-bridge-plugin/api/app.py
+touch Helm-bridge-plugin/api/models.py
+touch Helm-bridge-plugin/api/__init__.py
+touch Helm-bridge-plugin/api/requirements.txt
+touch Helm-bridge-plugin/api/config.py
+touch Helm-bridge-plugin/api/routes.py
+touch Helm-bridge-plugin/db/init.sql
 ```
 
 ## Setting Up the Development Environment
@@ -66,7 +66,7 @@ touch bridge/db/init.sql
 
 ```bash
 git clone https://github.com/yourusername/bridge.git
-cd bridge
+cd Helm-bridge-plugin
 ```
 
 2. **Create a Virtual Environment**:
@@ -95,7 +95,7 @@ flask db upgrade
 1. **Run the Flask Application**:
 
 ```bash
-export FLASK_APP=bridge.api.app
+export FLASK_APP=Helm-bridge-plugin.api.app
 export FLASK_ENV=development
 flask run
 ```
@@ -105,13 +105,13 @@ flask run
 1. **Build the Docker Image**:
 
 ```bash
-docker build -t bridge-app .
+docker build -t Helm-bridge-plugin-app .
 ```
 
 2. **Run the Docker Container**:
 
 ```bash
-docker run -d -p 8000:8000 --name bridge-app bridge-app
+docker run -d -p 8000:8000 --name Helm-bridge-plugin-app Helm-bridge-plugin-app
 ```
 
 ## API Endpoints

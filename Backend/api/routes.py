@@ -1,39 +1,31 @@
+# routes.py
 from flask import Blueprint, request, jsonify
-from marshmallow import Schema, fields, ValidationError
 from .models import Resource
+from .schema import ResourceSchema
 from . import db
 import logging
 from sqlalchemy.exc import IntegrityError
-from werkzeug.exceptions import NotFound, BadRequest
+from marshmallow import ValidationError
+from werkzeug.exceptions import NotFound
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 logging.basicConfig(level=logging.INFO)
 
-# Marshmallow Schema for Resource
-class ResourceSchema(Schema):
-    id = fields.Int(dump_only=True)
-    name = fields.Str(required=True)
-    arn = fields.Str(required=True)
-    value = fields.Str(allow_none=True)
-    resource_type = fields.Str(required=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-
 resource_schema = ResourceSchema()
 resources_schema = ResourceSchema(many=True)
 
-@bp.route('/resource', methods=['POST'])
-def add_resource():
+@bp.route('/resource/<namespace>', methods=['POST'])
+def add_resource(namespace):
     data = request.get_json()
-    logging.info(f"POST /resource data: {data}")
+    logging.info(f"POST /resource/{namespace} data: {data}")
 
     try:
         resource_schema.load(data)
-        if Resource.query.filter_by(name=data['name']).first():
+        if Resource.query.filter_by(name=data['name'], namespace=namespace).first():
             logging.info("Resource with this name already exists")
-            return jsonify({'error': 'Resource with this name already exists'}), 409
+            return jsonify({'error': 'Resource with this name already exists in this namespace'}), 409
 
-        resource = Resource(**data)
+        resource = Resource(**data, namespace=namespace)
         db.session.add(resource)
         db.session.commit()
         logging.info(f"Resource created: {resource}")
@@ -51,46 +43,50 @@ def add_resource():
         db.session.rollback()
         return jsonify({'error': 'Internal Server Error: ' + str(e)}), 500
 
-@bp.route('/resource/<name>', methods=['GET'])
-def get_resource(name):
-    logging.info(f"GET /resource/{name}")
-    resource = Resource.query.filter_by(name=name).first_or_404()
+@bp.route('/resource/<namespace>/<name>', methods=['GET'])
+def get_resource(namespace, name):
+    logging.info(f"GET /resource/{namespace}/{name}")
+    resource = Resource.query.filter_by(name=name, namespace=namespace).first_or_404()
     logging.info(f"Resource found: {resource}")
     return resource_schema.jsonify(resource), 200
 
-@bp.route('/resource/all', methods=['GET'])
-def get_all_resources():
-    logging.info("GET /resource/all")
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+@bp.route('/resource/<namespace>/all', methods=['GET'])
+def get_all_resources(namespace):
+    try:
+        logging.info(f"GET /resource/{namespace}/all")
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
 
-    resources_pagination = Resource.query.paginate(page, per_page, error_out=False)
-    resources = resources_pagination.items
-    total = resources_pagination.total
+        resources_pagination = Resource.query.filter_by(namespace=namespace).paginate(page=page, per_page=per_page, error_out=False)
+        resources = resources_pagination.items
+        total = resources_pagination.total
 
-    logging.info(f"Resources list: {resources}")
-    response = {
-        'total': total,
-        'page': page,
-        'per_page': per_page,
-        'resources': resources_schema.dump(resources)
-    }
-    return jsonify(response), 200
+        logging.info(f"Resources list: {resources}")
+        response = {
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'resources': resources_schema.dump(resources)
+        }
+        return jsonify(response), 200
+    except Exception as e:
+        logging.error(f"Exception: {e}")
+        return jsonify({'error': 'Internal Server Error: ' + str(e)}), 500
 
-@bp.route('/resource/<name>', methods=['PUT'])
-def update_resource(name):
+@bp.route('/resource/<namespace>/<name>', methods=['PUT'])
+def update_resource(namespace, name):
     data = request.get_json()
-    logging.info(f"PUT /resource/{name} data: {data}")
+    logging.info(f"PUT /resource/{namespace}/{name} data: {data}")
 
     try:
         resource_schema.load(data)
-        resource = Resource.query.filter_by(name=name).first()
+        resource = Resource.query.filter_by(name=name, namespace=namespace).first()
         if not resource:
-            raise NotFound(f'Resource with name {name} does not exist')
+            raise NotFound(f'Resource with name {name} does not exist in namespace {namespace}')
 
-        resource.arn = data['arn']
+        resource.arn = data.get('arn')
         resource.value = data.get('value')
-        resource.resource_type = data['resource_type']
+        resource.resource_type = data.get('resource_type')
         db.session.commit()
         logging.info(f"Resource updated: {resource}")
         return resource_schema.jsonify(resource), 200
@@ -106,13 +102,13 @@ def update_resource(name):
         db.session.rollback()
         return jsonify({'error': 'Internal Server Error: ' + str(e)}), 500
 
-@bp.route('/resource/<name>', methods=['DELETE'])
-def delete_resource(name):
-    logging.info(f"DELETE /resource/{name}")
+@bp.route('/resource/<namespace>/<name>', methods=['DELETE'])
+def delete_resource(namespace, name):
+    logging.info(f"DELETE /resource/{namespace}/{name}")
     try:
-        resource = Resource.query.filter_by(name=name).first()
+        resource = Resource.query.filter_by(name=name, namespace=namespace).first()
         if not resource:
-            raise NotFound(f'Resource with name {name} does not exist')
+            raise NotFound(f'Resource with name {name} does not exist in namespace {namespace}')
 
         db.session.delete(resource)
         db.session.commit()
@@ -123,15 +119,15 @@ def delete_resource(name):
         db.session.rollback()
         return jsonify({'error': 'Internal Server Error: ' + str(e)}), 500
 
-@bp.route('/resource/search', methods=['GET'])
-def search_resources():
+@bp.route('/resource/<namespace>/search', methods=['GET'])
+def search_resources(namespace):
     name = request.args.get('name')
     arn = request.args.get('arn')
     resource_type = request.args.get('resource_type')
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
 
-    query = Resource.query
+    query = Resource.query.filter_by(namespace=namespace)
 
     if name:
         query = query.filter(Resource.name.ilike(f"%{name}%"))

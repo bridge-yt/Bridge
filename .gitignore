@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-.env
+Backend/api/.env
 *.log
 .terraform/
 .terraform.lock.hcl
