@@ -1,3 +1,7 @@
+Here's the updated README content with detailed explanations for the Bridge application:
+
+---
+
 # Bridge Application: Detailed Explanation
 
 **Objective**:
@@ -48,16 +52,16 @@ bridge/
 ## Commands to Create the Project Structure:
 
 ```bash
-mkdir -p Helm-bridge-plugin/api
-mkdir -p Helm-bridge-plugin/migrations
-mkdir -p Helm-bridge-plugin/db
-touch Helm-bridge-plugin/api/app.py
-touch Helm-bridge-plugin/api/models.py
-touch Helm-bridge-plugin/api/__init__.py
-touch Helm-bridge-plugin/api/requirements.txt
-touch Helm-bridge-plugin/api/config.py
-touch Helm-bridge-plugin/api/routes.py
-touch Helm-bridge-plugin/db/init.sql
+mkdir -p bridge/api
+mkdir -p bridge/migrations
+mkdir -p bridge/db
+touch bridge/api/app.py
+touch bridge/api/models.py
+touch bridge/api/__init__.py
+touch bridge/api/requirements.txt
+touch bridge/api/config.py
+touch bridge/api/routes.py
+touch bridge/db/init.sql
 ```
 
 ## Setting Up the Development Environment
@@ -66,7 +70,7 @@ touch Helm-bridge-plugin/db/init.sql
 
 ```bash
 git clone https://github.com/yourusername/bridge.git
-cd Helm-bridge-plugin
+cd bridge
 ```
 
 2. **Create a Virtual Environment**:
@@ -95,7 +99,7 @@ flask db upgrade
 1. **Run the Flask Application**:
 
 ```bash
-export FLASK_APP=Helm-bridge-plugin.api.app
+export FLASK_APP=bridge.api.app
 export FLASK_ENV=development
 flask run
 ```
@@ -105,23 +109,24 @@ flask run
 1. **Build the Docker Image**:
 
 ```bash
-docker build -t Helm-bridge-plugin-app .
+docker build -t bridge-app .
 ```
 
 2. **Run the Docker Container**:
 
 ```bash
-docker run -d -p 8000:8000 --name Helm-bridge-plugin-app Helm-bridge-plugin-app
+docker run -d -p 8000:8000 --name bridge-app bridge-app
 ```
 
 ## API Endpoints
 
-- **Register a Resource**: `POST /api/resource`
-- **Get a Resource**: `GET /api/resource/<name>`
-- **Get All Resources**: `GET /api/resource/all`
-- **Update a Resource**: `PUT /api/resource/<name>`
-- **Delete a Resource**: `DELETE /api/resource/<name>`
-- **Search Resources**: `GET /api/resource/search?name=<name>&arn=<arn>&resource_type=<resource_type>`
+- **Register a Resource**: `POST /api/resource/<namespace>`
+- **Get a Resource**: `GET /api/resource/<namespace>/<name>`
+- **Get All Resources from a Namespace**: `GET /api/resource/<namespace>/all`
+- **Get All Resources**: `GET /api/resources`
+- **Update a Resource**: `PUT /api/resource/<namespace>/<name>`
+- **Delete a Resource**: `DELETE /api/resource/<namespace>/<name>`
+- **Search Resources**: `GET /api/resource/<namespace>/search?name=<name>&arn=<arn>&resource_type=<resource_type>`
 
 ## Configuration
 
@@ -133,7 +138,7 @@ docker run -d -p 8000:8000 --name Helm-bridge-plugin-app Helm-bridge-plugin-app
 
 **`models.py`**:
 
-- Defines the Resource model with fields such as `name`, `arn`, `value`, `resource_type`, `created_at`, and `updated_at`.
+- Defines the Resource model with fields such as `name`, `namespace`, `arn`, `value`, `resource_type`, `created_at`, and `updated_at`.
 
 ## Routes
 
@@ -150,5 +155,3 @@ docker run -d -p 8000:8000 --name Helm-bridge-plugin-app Helm-bridge-plugin-app
 For more detailed information and documentation, please refer to the [official documentation](https://github.com/yourusername/bridge/wiki).
 
 ---
-
-Feel free to customize the README further based on your specific needs and any additional features or instructions you want to include. If you need further assistance, let me know!
