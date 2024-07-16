@@ -1,7 +1,6 @@
-# bridge.py
 from flask import Flask, send_from_directory
 from .config import Config
-from . import db
+from . import db, init_app
 from flask_migrate import Migrate
 
 def create_app():

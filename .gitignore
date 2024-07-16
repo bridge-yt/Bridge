@@ -1,10 +1,43 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-Backend/api/.env
-*.log
-.terraform/
-.terraform.lock.hcl
-terraform.tfstate
-terraform.tfstate.backup
-migrations
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.env
+.venv
+
+# VS Code settings
+.vscode/
+
+# Pytest cache
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# SQLAlchemy migration files
+migrations/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environments
+.env
 venv
