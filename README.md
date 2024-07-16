@@ -1,4 +1,4 @@
-Here's the updated README content with detailed explanations for the Bridge application:
+Here's the updated README with a feature matrix and upcoming features section:
 
 ---
 
@@ -26,6 +26,37 @@ The Bridge application acts as a central registry for resources, where each reso
    - **Crossplane Provider**: Enables Crossplane to interact with the Bridge for resource management.
    - **ArgoCD Integration**: Provides seamless integration with ArgoCD for continuous delivery.
 
+## Feature Matrix
+
+| Source Tool  | Target Tool  | Status        |
+|--------------|--------------|---------------|
+| Terraform    | Terraform    | Supported     |
+| Terraform    | EKS          | Supported     |
+| EKS          | Terraform    | Supported     |
+| Crossplane   | Terraform    | Supported     |
+| Terraform    | Crossplane   | Supported     |
+| ArgoCD       | Terraform    | Supported     |
+| Terraform    | ArgoCD       | Supported     |
+| EKS          | Crossplane   | Upcoming      |
+| Crossplane   | EKS          | Upcoming      |
+| EKS          | ArgoCD       | Upcoming      |
+| ArgoCD       | EKS          | Upcoming      |
+
+## Upcoming Features
+
+- **Enhanced Crossplane Integration**:
+  - Bi-directional resource management between Crossplane and EKS.
+- **Advanced ArgoCD Support**:
+  - Deeper integration for continuous delivery pipelines.
+- **Role-Based Access Control (RBAC)**:
+  - Fine-grained access control for resources.
+- **Audit Logging**:
+  - Comprehensive logging for all resource changes and access.
+- **Multi-Cloud Support**:
+  - Extending support to additional cloud providers.
+- **Resource Dependency Management**:
+  - Automatically manage dependencies between resources across different tools.
+
 ## Project Directory Structure:
 
 Here's the directory structure for the Bridge application:
@@ -49,20 +80,6 @@ bridge/
 │   ├── init.sql
 ```
 
-## Commands to Create the Project Structure:
-
-```bash
-mkdir -p bridge/api
-mkdir -p bridge/migrations
-mkdir -p bridge/db
-touch bridge/api/app.py
-touch bridge/api/models.py
-touch bridge/api/__init__.py
-touch bridge/api/requirements.txt
-touch bridge/api/config.py
-touch bridge/api/routes.py
-touch bridge/db/init.sql
-```
 
 ## Setting Up the Development Environment
 
