@@ -1,4 +1,3 @@
-# routes.py
 from flask import Blueprint, request, jsonify
 from .models import Resource
 from .schema import ResourceSchema
@@ -22,8 +21,8 @@ def add_resource(namespace):
     try:
         resource_schema.load(data)
         if Resource.query.filter_by(name=data['name'], namespace=namespace).first():
-            logging.info("Resource with this name already exists")
-            return jsonify({'error': 'Resource with this name already exists in this namespace'}), 409
+            logging.info("Resource with this name already exists in this namespace")
+            return jsonify({'error': 'Resource with this name already exists'}), 409
 
         resource = Resource(**data, namespace=namespace)
         db.session.add(resource)
@@ -147,3 +146,28 @@ def search_resources(namespace):
         'resources': resources_schema.dump(resources)
     }
     return jsonify(response), 200
+
+@bp.route('/namespaces', methods=['GET'])
+def get_all_namespaces():
+    try:
+        logging.info("GET /namespaces")
+        namespaces = db.session.query(Resource.namespace.distinct()).all()
+        namespace_list = [ns[0] for ns in namespaces]
+
+        logging.info(f"Namespace list: {namespace_list}")
+        return jsonify({'namespaces': namespace_list}), 200
+    except Exception as e:
+        logging.error(f"Exception: {e}")
+        return jsonify({'error': 'Internal Server Error: ' + str(e)}), 500
+
+@bp.route('/resources', methods=['GET'])
+def get_all_resources_all_namespaces():
+    try:
+        logging.info("GET /resources")
+        resources = Resource.query.all()
+        logging.info(f"Resources list: {resources}")
+        response = resources_schema.dump(resources)
+        return jsonify(response), 200
+    except Exception as e:
+        logging.error(f"Exception: {e}")
+        return jsonify({'error': 'Internal Server Error: ' + str(e)}), 500

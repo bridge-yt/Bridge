@@ -7,6 +7,7 @@ class Resource(db.Model):
     arn = db.Column(db.String(255), nullable=False)
     value = db.Column(db.String(255))
     resource_type = db.Column(db.String(255), nullable=False)
+    namespace = db.Column(db.String(255), nullable=False)  # Add this line
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
