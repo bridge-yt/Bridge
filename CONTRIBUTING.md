@@ -20,5 +20,5 @@ We follow the standard GitHub workflow for contributions. Here's a step-by-step 
 
 2. **Clone Your Fork**: Clone your fork to your local machine to start working on your changes.
    ```sh
-   git clone https://github.com/yourusername/bridge.git
+   git clone https://github.com/bridge-yt/bridge.git
    cd bridge
