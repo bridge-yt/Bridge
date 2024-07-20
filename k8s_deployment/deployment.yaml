@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bridge-app
+  namespace: dev5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bridge-app
+  template:
+    metadata:
+      labels:
+        app: bridge-app
+    spec:
+      containers:
+      - name: bridge
+        image: yaront111/bridge:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://bridge_user:password@localhost:5432/bridge"
+        - name: SECRET_KEY
+          value: "mysecretkey"
+        - name: FLASK_ENV
+          value: "production"
+        - name: FLASK_APP
+          value: "api/bridge.py"
+        - name: DEBUG
+          value: "False"
+      - name: postgres
+        image: postgres:13
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "bridge"
+        - name: POSTGRES_USER
+          value: "bridge_user"
+        - name: POSTGRES_PASSWORD
+          value: "password"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}

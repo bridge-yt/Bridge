@@ -13,6 +13,27 @@ logging.basicConfig(level=logging.INFO)
 resource_schema = ResourceSchema()
 resources_schema = ResourceSchema(many=True)
 
+@bp.route('/namespace', methods=['POST'])
+def create_namespace():
+    data = request.get_json()
+    namespace = data.get('namespace')
+    if not namespace:
+        return jsonify({'error': 'Namespace is required'}), 400
+
+    # Check if namespace already exists
+    existing_namespace = db.session.query(Resource.namespace.distinct()).filter_by(namespace=namespace).first()
+    if existing_namespace:
+        return jsonify({'error': 'Namespace already exists'}), 409
+
+    # Create a dummy resource to register the namespace
+    dummy_resource = Resource(name=f'{namespace}_dummy', arn='', namespace=namespace, resource_type='dummy')
+    db.session.add(dummy_resource)
+    db.session.commit()
+    db.session.delete(dummy_resource)
+    db.session.commit()
+
+    return jsonify({'message': 'Namespace created'}), 201
+
 @bp.route('/resource/<namespace>', methods=['POST'])
 def add_resource(namespace):
     data = request.get_json()
@@ -29,7 +50,7 @@ def add_resource(namespace):
         db.session.commit()
         logging.info(f"Resource created: {resource}")
 
-        return resource_schema.jsonify(resource), 201
+        return resource_schema.dump(resource), 201
     except ValidationError as ve:
         logging.error(f"ValidationError: {ve.messages}")
         return jsonify({'error': 'Invalid data', 'messages': ve.messages}), 400
@@ -47,7 +68,7 @@ def get_resource(namespace, name):
     logging.info(f"GET /resource/{namespace}/{name}")
     resource = Resource.query.filter_by(name=name, namespace=namespace).first_or_404()
     logging.info(f"Resource found: {resource}")
-    return resource_schema.jsonify(resource), 200
+    return resource_schema.dump(resource), 200
 
 @bp.route('/resource/<namespace>/all', methods=['GET'])
 def get_all_resources(namespace):
@@ -88,7 +109,7 @@ def update_resource(namespace, name):
         resource.resource_type = data.get('resource_type')
         db.session.commit()
         logging.info(f"Resource updated: {resource}")
-        return resource_schema.jsonify(resource), 200
+        return resource_schema.dump(resource), 200
     except ValidationError as ve:
         logging.error(f"ValidationError: {ve.messages}")
         return jsonify({'error': 'Invalid data', 'messages': ve.messages}), 400

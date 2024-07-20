@@ -56,6 +56,10 @@ The Bridge application acts as a central registry for resources, where each reso
   - Extending support to additional cloud providers.
 - **Resource Dependency Management**:
   - Automatically manage dependencies between resources across different tools.
+- **Security improvements **:
+  - TBD.
+- **Using Non DB data sources  **:
+  - TBD.
 
 ## Project Directory Structure:
 
