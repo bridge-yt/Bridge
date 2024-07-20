@@ -41,3 +41,4 @@ Thumbs.db
 # Environments
 .env
 venv
+Certs
