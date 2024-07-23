@@ -1,11 +1,11 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, render_template
 from .config import Config
 from . import db
 from flask_migrate import Migrate
 from flask_talisman import Talisman
 
 def create_app():
-    app = Flask(__name__, static_folder='../bridgeui/build', static_url_path='/')
+    app = Flask(__name__, static_folder='../../Frontend/bridge-ui/build', static_url_path='/static')
     app.config.from_object(Config)
 
     db.init_app(app)
@@ -20,6 +20,10 @@ def create_app():
     @app.route('/')
     def serve():
         return send_from_directory(app.static_folder, 'index.html')
+
+    @app.route('/<path:path>')
+    def serve_static_files(path):
+        return send_from_directory(app.static_folder, path)
 
     @app.errorhandler(404)
     def not_found(e):

@@ -1,47 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { getNamespaces, getResources } from '../api';
+import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, List, ListItem, ListItemText, CircularProgress, TextField, InputAdornment,
-  Card, CardContent, Grid, Toolbar, AppBar, IconButton
+  Box, Typography, List, ListItemButton, ListItemText, ListItemIcon, CircularProgress, TextField, InputAdornment,
+  Card, CardContent, Grid, Fade, Toolbar, AppBar, Divider, Button
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import FolderIcon from '@mui/icons-material/Folder';
 import ResourceTable from './ResourceTable';
-
-const DashboardContainer = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(4),
-  background: 'linear-gradient(135deg, #2196F3, #9C27B0)', // Gradient background
-  minHeight: '100vh',
-}));
-
-const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  marginBottom: theme.spacing(4),
-}));
-
-const StyledSearchField = styled(TextField)(({ theme }) => ({
-  backgroundColor: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[1],
-}));
+import ResourceForm from './ResourceForm';
+import NamespaceForm from './NamespaceForm';
+import { getNamespaces, getResources, addResource, createNamespace } from '../api';
 
 const Dashboard = () => {
   const [namespaces, setNamespaces] = useState([]);
   const [selectedNamespace, setSelectedNamespace] = useState('');
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchNamespaces = async () => {
       try {
-        console.log('Fetching namespaces...');
         const response = await getNamespaces();
         setNamespaces(response.data.namespaces);
-        console.log('Namespaces fetched:', response.data.namespaces);
         setSelectedNamespace(response.data.namespaces[0]);
       } catch (error) {
         console.error('Error fetching namespaces:', error);
+        setError(error);
       }
     };
 
@@ -53,12 +38,11 @@ const Dashboard = () => {
       if (!selectedNamespace) return;
       setLoading(true);
       try {
-        console.log('Fetching resources for namespace:', selectedNamespace);
         const response = await getResources(selectedNamespace);
         setResources(response.data.resources);
-        console.log('Resources fetched:', response.data.resources);
       } catch (error) {
         console.error('Error fetching resources:', error);
+        setError(error);
       } finally {
         setLoading(false);
       }
@@ -75,18 +59,39 @@ const Dashboard = () => {
     setSearchQuery(e.target.value);
   };
 
+  const handleAddResource = async (resource) => {
+    try {
+      const response = await addResource(selectedNamespace, resource);
+      setResources([...resources, response.data]);
+    } catch (error) {
+      console.error('Error adding resource:', error);
+      setError(error);
+    }
+  };
+
+  const handleAddNamespace = async (namespace) => {
+    try {
+      const response = await createNamespace(namespace);
+      setNamespaces([...namespaces, namespace]);
+      setSelectedNamespace(namespace);
+    } catch (error) {
+      console.error('Error adding namespace:', error);
+      setError(error);
+    }
+  };
+
   const filteredResources = resources.filter((resource) =>
     resource.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <DashboardContainer>
-      <StyledAppBar position="static">
+    <Box sx={{ padding: 3, minHeight: '100vh', backgroundColor: '#f4f6f8' }}>
+      <AppBar position="static" className="MuiAppBar-root">
         <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Dashboard Overview
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            Resource Management
           </Typography>
-          <StyledSearchField
+          <TextField
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder="Search..."
@@ -97,45 +102,71 @@ const Dashboard = () => {
                 </InputAdornment>
               ),
             }}
+            sx={{ width: '300px' }}
           />
         </Toolbar>
-      </StyledAppBar>
+      </AppBar>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
+      <Grid container spacing={3} alignItems="stretch" justifyContent="center" sx={{ mt: 2 }}>
+        <Grid item xs={12} md={3}>
+          <Card className="MuiCard-root">
             <CardContent>
-              <Typography variant="h6" align="center">
+              <Typography variant="h6" align="center" gutterBottom>
                 Namespaces
               </Typography>
+              <Divider />
               <List>
-                {namespaces.map(ns => (
-                  <ListItem
+                {namespaces.map((ns) => (
+                  <ListItemButton
                     key={ns}
-                    button
                     onClick={() => handleNamespaceClick(ns)}
+                    selected={ns === selectedNamespace}
                     sx={{
                       borderRadius: 1,
                       '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' },
                     }}
                   >
-                    <FolderIcon sx={{ marginRight: 1 }} />
-                    <ListItemText primary={ns} />
-                  </ListItem>
+                    <ListItemIcon>
+                      <FolderIcon sx={{ color: 'inherit' }} />
+                    </ListItemIcon>
+                    <ListItemText primary={ns} primaryTypographyProps={{ color: 'textPrimary' }} />
+                  </ListItemButton>
                 ))}
               </List>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={8}>
+
+        <Grid item xs={12} md={9}>
+          <Box display="flex" justifyContent="flex-end" mb={2} gap={2}>
+            <NamespaceForm onAddNamespace={handleAddNamespace} />
+            <ResourceForm namespace={selectedNamespace} onAddResource={handleAddResource} />
+          </Box>
           {loading ? (
-            <CircularProgress />
+            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+              <CircularProgress color="primary" />
+            </Box>
+          ) : error ? (
+            <Typography variant="h6" color="error" align="center">
+              {error.message}
+            </Typography>
           ) : (
-            <ResourceTable namespace={selectedNamespace} resources={filteredResources} setResources={setResources} />
+            <Fade in={!!selectedNamespace} timeout={500}>
+              <Box>
+                <Typography variant="h5" gutterBottom>
+                  Namespace: {selectedNamespace}
+                </Typography>
+                <ResourceTable
+                  namespace={selectedNamespace}
+                  resources={filteredResources}
+                  setResources={setResources}
+                />
+              </Box>
+            </Fade>
           )}
         </Grid>
       </Grid>
-    </DashboardContainer>
+    </Box>
   );
 };
 

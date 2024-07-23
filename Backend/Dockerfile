@@ -1,3 +1,17 @@
+# Use a multi-stage build to create a smaller final image
+FROM node:14 AS build
+
+# Set working directory for frontend
+WORKDIR /app/frontend
+
+# Copy frontend files
+COPY Frontend/bridge-ui/package*.json ./
+COPY Frontend/bridge-ui/ ./
+
+# Install dependencies and build the React app
+RUN npm install
+RUN npm run build
+
 FROM python:3.9-slim-buster
 
 # Set environment variables
@@ -7,14 +21,22 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y gunicorn
+RUN apt-get update && apt-get install -y gunicorn nginx
 
 # Install Python dependencies
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
-# Copy the application code
-COPY . .
+# Copy the backend application code
+COPY Backend .
+
+# Copy built frontend files from the previous stage
+COPY --from=build /app/frontend/build /app/frontend/build
+
+# Configure Nginx
+RUN rm /etc/nginx/sites-enabled/default
+COPY nginx.conf /etc/nginx/sites-available/bridge
+RUN ln -s /etc/nginx/sites-available/bridge /etc/nginx/sites-enabled/
 
 # Set environment variables for Flask
 ENV FLASK_APP=api.bridge:app
@@ -29,4 +51,4 @@ RUN flask db upgrade || true  # Apply migrations
 EXPOSE 8000
 
 # Set the command to run the application
-CMD ["gunicorn", "api.bridge:app", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "api.bridge:app", "--bind", "0.0.0.0:8000", "--daemon"] && nginx -g 'daemon off;'

@@ -6,9 +6,15 @@ const NamespaceList = () => {
   const [namespaces, setNamespaces] = useState([]);
 
   useEffect(() => {
-    getNamespaces().then(response => {
-      setNamespaces(response.data.namespaces);
-    });
+    console.log("Fetching namespaces...");
+    getNamespaces()
+      .then(response => {
+        console.log("Namespaces fetched:", response.data.namespaces);
+        setNamespaces(response.data.namespaces);
+      })
+      .catch(error => {
+        console.error("Error fetching namespaces:", error);
+      });
   }, []);
 
   return (

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from .models import Resource
-from .schema import ResourceSchema
+from .models import Resource, Namespace
+from .schema import ResourceSchema, NamespaceSchema
 from . import db
 import logging
 from sqlalchemy.exc import IntegrityError
@@ -12,24 +12,24 @@ logging.basicConfig(level=logging.INFO)
 
 resource_schema = ResourceSchema()
 resources_schema = ResourceSchema(many=True)
+namespace_schema = NamespaceSchema()
+namespaces_schema = NamespaceSchema(many=True)
 
 @bp.route('/namespace', methods=['POST'])
 def create_namespace():
     data = request.get_json()
-    namespace = data.get('namespace')
-    if not namespace:
+    namespace_name = data.get('namespace')
+    if not namespace_name:
         return jsonify({'error': 'Namespace is required'}), 400
 
     # Check if namespace already exists
-    existing_namespace = db.session.query(Resource.namespace.distinct()).filter_by(namespace=namespace).first()
+    existing_namespace = Namespace.query.filter_by(name=namespace_name).first()
     if existing_namespace:
         return jsonify({'error': 'Namespace already exists'}), 409
 
-    # Create a dummy resource to register the namespace
-    dummy_resource = Resource(name=f'{namespace}_dummy', arn='', namespace=namespace, resource_type='dummy')
-    db.session.add(dummy_resource)
-    db.session.commit()
-    db.session.delete(dummy_resource)
+    # Create the new namespace
+    new_namespace = Namespace(name=namespace_name)
+    db.session.add(new_namespace)
     db.session.commit()
 
     return jsonify({'message': 'Namespace created'}), 201
@@ -40,12 +40,23 @@ def add_resource(namespace):
     logging.info(f"POST /resource/{namespace} data: {data}")
 
     try:
+        # Check if the namespace exists
+        ns = Namespace.query.filter_by(name=namespace).first()
+        if not ns:
+            return jsonify({'error': 'Namespace does not exist'}), 404
+
+        # Validate the incoming data
+        data['namespace'] = namespace  # Assign the namespace from the URL to the data
         resource_schema.load(data)
-        if Resource.query.filter_by(name=data['name'], namespace=namespace).first():
+
+        # Check if the resource already exists in the specified namespace
+        existing_resource = Resource.query.filter_by(name=data['name'], namespace=namespace).first()
+        if existing_resource:
             logging.info("Resource with this name already exists in this namespace")
             return jsonify({'error': 'Resource with this name already exists'}), 409
 
-        resource = Resource(**data, namespace=namespace)
+        # Create a new resource
+        resource = Resource(**data)
         db.session.add(resource)
         db.session.commit()
         logging.info(f"Resource created: {resource}")
@@ -55,9 +66,9 @@ def add_resource(namespace):
         logging.error(f"ValidationError: {ve.messages}")
         return jsonify({'error': 'Invalid data', 'messages': ve.messages}), 400
     except IntegrityError as e:
-        logging.error(f"IntegrityError: {e}")
+        logging.error(f"IntegrityError: {e.orig}")
         db.session.rollback()
-        return jsonify({'error': 'Database integrity error'}), 500
+        return jsonify({'error': 'Database integrity error', 'details': str(e.orig)}), 500
     except Exception as e:
         logging.error(f"Exception: {e}")
         db.session.rollback()
@@ -93,20 +104,23 @@ def get_all_resources(namespace):
         logging.error(f"Exception: {e}")
         return jsonify({'error': 'Internal Server Error: ' + str(e)}), 500
 
+
 @bp.route('/resource/<namespace>/<name>', methods=['PUT'])
 def update_resource(namespace, name):
     data = request.get_json()
     logging.info(f"PUT /resource/{namespace}/{name} data: {data}")
 
     try:
-        resource_schema.load(data)
+        # Validate the incoming data
+        resource_schema.load(data, partial=True)
+
         resource = Resource.query.filter_by(name=name, namespace=namespace).first()
         if not resource:
             raise NotFound(f'Resource with name {name} does not exist in namespace {namespace}')
 
-        resource.arn = data.get('arn')
-        resource.value = data.get('value')
-        resource.resource_type = data.get('resource_type')
+        resource.arn = data.get('arn', resource.arn)
+        resource.value = data.get('value', resource.value)
+        resource.resource_type = data.get('resource_type', resource.resource_type)
         db.session.commit()
         logging.info(f"Resource updated: {resource}")
         return resource_schema.dump(resource), 200
@@ -116,7 +130,7 @@ def update_resource(namespace, name):
     except IntegrityError as e:
         logging.error(f"IntegrityError: {e}")
         db.session.rollback()
-        return jsonify({'error': 'Database integrity error'}), 500
+        return jsonify({'error': 'Database integrity error', 'details': str(e.orig)}), 500
     except Exception as e:
         logging.error(f"Exception: {e}")
         db.session.rollback()
@@ -172,8 +186,8 @@ def search_resources(namespace):
 def get_all_namespaces():
     try:
         logging.info("GET /namespaces")
-        namespaces = db.session.query(Resource.namespace.distinct()).all()
-        namespace_list = [ns[0] for ns in namespaces]
+        namespaces = Namespace.query.all()
+        namespace_list = [ns.name for ns in namespaces]
 
         logging.info(f"Namespace list: {namespace_list}")
         return jsonify({'namespaces': namespace_list}), 200
