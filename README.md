@@ -104,9 +104,17 @@ source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 3. **Install Dependencies**:
 
 ```bash
-pip install -r backend/requirements.txt
-```
+pip install -r Backend/requirements.txt
 
+```
+For FrontEnd
+```
+cd Frontend/bridge-ui
+npm install
+npm run build
+cd ../../
+
+```
 
 
 ## Running the Application
