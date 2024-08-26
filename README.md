@@ -107,21 +107,24 @@ source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 pip install -r backend/requirements.txt
 ```
 
-4. **Set Up the Database**:
 
-```bash
-flask db init
-flask db migrate -m "Initial migration."
-flask db upgrade
-```
 
 ## Running the Application
 
 1. **Run the Flask Application**:
 
 ```bash
-export FLASK_APP=bridge.api.app
+export FLASK_APP=Backend.api.bridge
 export FLASK_ENV=development
+
+```
+
+2. **Set Up the Database**:
+
+```bash
+flask db init
+flask db migrate -m "Initial migration."
+flask db upgrade
 flask run
 ```
 
