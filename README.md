@@ -104,7 +104,7 @@ source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 3. **Install Dependencies**:
 
 ```bash
-pip install -r api/requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 4. **Set Up the Database**:
