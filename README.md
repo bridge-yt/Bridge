@@ -109,6 +109,8 @@ pip install -r Backend/requirements.txt
 ```
 For FrontEnd
 ```
+export NODE_OPTIONS=--openssl-legacy-provider
+
 cd Frontend/bridge-ui
 npm install
 npm run build
