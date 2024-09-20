@@ -6,3 +6,4 @@ flask_talisman
 gunicorn
 alembic
 psycopg2-binary
+python-dotenv
