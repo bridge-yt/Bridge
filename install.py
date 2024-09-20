@@ -40,7 +40,7 @@ def copy_certificates(cert_path, key_path):
 
 
 def generate_self_signed_cert():
-    """Generate a self-signed SSL certificate and key."""
+    """Generate a self-signed SSL certificate and key and trust it in macOS."""
     cert_dest = os.path.join(CERT_DIR, 'self-signed-cert.pem')
     key_dest = os.path.join(CERT_DIR, 'self-signed-key.pem')
 
@@ -55,11 +55,20 @@ def generate_self_signed_cert():
         print(f"Generated self-signed SSL certificate at {cert_dest}")
         print(f"Generated self-signed SSL key at {key_dest}")
 
+        # Trust the certificate on macOS
+        print("Adding the self-signed certificate to macOS Keychain and setting it to 'Always Trust'...")
+        subprocess.run([
+            'sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-k',
+            '/Library/Keychains/System.keychain', cert_dest
+        ], check=True)
+
+        print("Successfully added the certificate to the macOS Keychain and set it to 'Always Trust'.")
+
         # Update the .env file with the paths
         update_config(cert_dest, key_dest)
 
     except subprocess.CalledProcessError as e:
-        print(f"Error generating self-signed certificate: {e}")
+        print(f"Error generating self-signed certificate or trusting the certificate: {e}")
 
 
 def update_config(cert_dest, key_dest):
