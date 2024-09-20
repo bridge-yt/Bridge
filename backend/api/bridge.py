@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_talisman import Talisman
 
 def create_app():
-    app = Flask(__name__, static_folder='../../Frontend/bridge-ui/build', static_url_path='/static')
+    app = Flask(__name__, static_folder='../../frontend/bridge-ui/build', static_url_path='/static')
     app.config.from_object(Config)
 
     db.init_app(app)

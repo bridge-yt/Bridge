@@ -24,7 +24,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'bridge=Backend.api.bridge:app',
+            'bridge=backend.api.bridge:app',
         ],
     },
 )

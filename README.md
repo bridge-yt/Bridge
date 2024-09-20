@@ -104,7 +104,7 @@ source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 3. **Install Dependencies**:
 
 ```bash
-pip install -r Backend/requirements.txt
+pip install -r backend/requirements.txt
 
 ```
 For FrontEnd
@@ -124,7 +124,7 @@ cd ../../
 1. **Run the Flask Application**:
 
 ```bash
-export FLASK_APP=Backend.api.bridge
+export FLASK_APP=backend.api.bridge
 export FLASK_ENV=development
 
 ```
