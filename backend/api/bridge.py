@@ -14,30 +14,22 @@ app.config.from_object(Config)
 db.init_app(app)
 Migrate(app, db)
 
-# Adjust Content Security Policy for development
 csp = {
     'default-src': [
         "'self'",
         'https://fonts.googleapis.com',  # Allow Google Fonts
         'https://fonts.gstatic.com',      # Allow Google Fonts
+        'data:'                           # Allow inline images and fonts
     ],
     'script-src': [
-        "'self'",                         # Only allow scripts from your own domain
-        'https://apis.google.com',        # Example: Allow trusted external scripts (if needed)
-        "'nonce-[dynamic-nonce]'",        # Use nonces for any inline scripts
+        "'self'",
+        "'unsafe-inline'",                # Allow inline scripts for development
     ],
     'style-src': [
         "'self'",
-        'https://fonts.googleapis.com',
-        "'nonce-[dynamic-nonce]'",        # Use nonces for inline styles (or avoid inline styles)
+        "'unsafe-inline'",                # Allow inline styles (CSS-in-JS)
+        'https://fonts.googleapis.com'
     ],
-    'img-src': [
-        "'self'",                         # Restrict images to be loaded from your own domain
-        'data:'                           # If you use data URIs for images
-    ],
-    'object-src': ["'none'"],             # Block Flash and other plugins
-    'frame-ancestors': ["'none'"],        # Prevent clickjacking by disallowing your site to be framed
-    'base-uri': ["'self'"],               # Disallow loading base tags from other sources
 }
 
 # Enforce HTTPS if SSL is enabled
