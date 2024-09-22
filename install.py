@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 
 # Define the destination directory for the certificates
 CERT_DIR = 'backend/api/Certs'
@@ -38,18 +39,17 @@ def copy_certificates(cert_path, key_path):
     except Exception as e:
         print(f"Error copying certificates: {e}")
 
-
 def generate_self_signed_cert():
-    """Generate a self-signed SSL certificate and key and trust it in macOS."""
+    """Generate a self-signed SSL certificate and key for bridge-yt.local and trust it in macOS."""
     cert_dest = os.path.join(CERT_DIR, 'self-signed-cert.pem')
     key_dest = os.path.join(CERT_DIR, 'self-signed-key.pem')
 
-    # Use OpenSSL to generate a self-signed certificate and key
+    # Use OpenSSL to generate a self-signed certificate and key for bridge-yt.local
     print("Generating self-signed certificate and key...")
     try:
         subprocess.run([
             'openssl', 'req', '-x509', '-newkey', 'rsa:4096', '-keyout', key_dest,
-            '-out', cert_dest, '-days', '365', '-nodes', '-subj', '/CN=localhost'
+            '-out', cert_dest, '-days', '365', '-nodes', '-subj', '/CN=bridge-yt.local'
         ], check=True)
 
         print(f"Generated self-signed SSL certificate at {cert_dest}")
@@ -88,8 +88,8 @@ def install_backend_dependencies():
     """Install Python dependencies for the backend."""
     print("Installing backend dependencies...")
     try:
-        subprocess.run(["pip", "install", "-r", "Backend/requirements.txt"], check=True)
-        print("Backend dependencies installed successfully.")
+        subprocess.run(["pip", "install", "-r", "backend/requirements.txt"], check=True)
+        print("backend dependencies installed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Error installing backend dependencies: {e}")
         exit(1)
@@ -103,9 +103,9 @@ def setup_frontend():
         os.environ['NODE_OPTIONS'] = '--openssl-legacy-provider'
 
         # Navigate to the frontend directory and install dependencies
-        subprocess.run(["npm", "install"], cwd="Frontend/bridge-ui", check=True)
-        subprocess.run(["npm", "run", "build"], cwd="Frontend/bridge-ui", check=True)
-        print("Frontend setup and build complete.")
+        subprocess.run(["npm", "install"], cwd="frontend/bridge-ui", check=True)
+        subprocess.run(["npm", "run", "build"], cwd="frontend/bridge-ui", check=True)
+        print("frontend setup and build complete.")
     except subprocess.CalledProcessError as e:
         print(f"Error setting up frontend: {e}")
         exit(1)

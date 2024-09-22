@@ -107,11 +107,11 @@ source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 pip install -r backend/requirements.txt
 
 ```
-For FrontEnd
+For frontend
 ```
 export NODE_OPTIONS=--openssl-legacy-provider
 
-cd Frontend/bridge-ui
+cd frontend/bridge-ui
 npm install
 npm run build
 cd ../../
