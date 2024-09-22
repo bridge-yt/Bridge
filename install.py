@@ -5,7 +5,6 @@ import shutil
 # Define the destination directory for the certificates
 CERT_DIR = 'backend/api/Certs'
 
-
 def create_cert_directory():
     """Create the Certs directory if it doesn't exist."""
     if not os.path.exists(CERT_DIR):
@@ -14,62 +13,33 @@ def create_cert_directory():
     else:
         print(f"Directory {CERT_DIR} already exists.")
 
-
-def copy_certificates(cert_path, key_path):
-    """Copy the SSL certificate and key files to the Certs directory, maintaining the original file names."""
+def install_mkcert():
+    """Install mkcert if it's not already installed."""
     try:
-        # Extract file names from the provided paths
-        cert_filename = os.path.basename(cert_path)
-        key_filename = os.path.basename(key_path)
+        subprocess.run(['mkcert', '-install'], check=True)
+        print("mkcert is already installed and configured.")
+    except subprocess.CalledProcessError:
+        print("mkcert is not installed. Please install it first.")
+        exit(1)
 
-        # Destination paths in the Certs directory
-        cert_dest = os.path.join(CERT_DIR, cert_filename)
-        key_dest = os.path.join(CERT_DIR, key_filename)
+def generate_mkcert_cert():
+    """Generate SSL certificates for localhost using mkcert."""
+    cert_dest = os.path.join(CERT_DIR, 'localhost.pem')
+    key_dest = os.path.join(CERT_DIR, 'localhost-key.pem')
 
-        # Copy the certificate and key to the Certs directory
-        shutil.copyfile(cert_path, cert_dest)
-        shutil.copyfile(key_path, key_dest)
-
-        print(f"Copied SSL certificate to {cert_dest}")
-        print(f"Copied SSL key to {key_dest}")
-
-        # Optionally, update environment variables or config file with paths
-        update_config(cert_dest, key_dest)
-
-    except Exception as e:
-        print(f"Error copying certificates: {e}")
-
-def generate_self_signed_cert():
-    """Generate a self-signed SSL certificate and key for bridge-yt.local and trust it in macOS."""
-    cert_dest = os.path.join(CERT_DIR, 'self-signed-cert.pem')
-    key_dest = os.path.join(CERT_DIR, 'self-signed-key.pem')
-
-    # Use OpenSSL to generate a self-signed certificate and key for bridge-yt.local
-    print("Generating self-signed certificate and key...")
+    # Use mkcert to generate certificates for localhost
+    print("Generating SSL certificates for localhost using mkcert...")
     try:
-        subprocess.run([
-            'openssl', 'req', '-x509', '-newkey', 'rsa:4096', '-keyout', key_dest,
-            '-out', cert_dest, '-days', '365', '-nodes', '-subj', '/CN=bridge-yt.local'
-        ], check=True)
+        subprocess.run(['mkcert', '-cert-file', cert_dest, '-key-file', key_dest, 'localhost'], check=True)
 
-        print(f"Generated self-signed SSL certificate at {cert_dest}")
-        print(f"Generated self-signed SSL key at {key_dest}")
-
-        # Trust the certificate on macOS
-        print("Adding the self-signed certificate to macOS Keychain and setting it to 'Always Trust'...")
-        subprocess.run([
-            'sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-k',
-            '/Library/Keychains/System.keychain', cert_dest
-        ], check=True)
-
-        print("Successfully added the certificate to the macOS Keychain and set it to 'Always Trust'.")
+        print(f"Generated SSL certificate at {cert_dest}")
+        print(f"Generated SSL key at {key_dest}")
 
         # Update the .env file with the paths
         update_config(cert_dest, key_dest)
 
     except subprocess.CalledProcessError as e:
-        print(f"Error generating self-signed certificate or trusting the certificate: {e}")
-
+        print(f"Error generating SSL certificate with mkcert: {e}")
 
 def update_config(cert_dest, key_dest):
     """Update the config file or environment variables to reflect the new paths."""
@@ -83,17 +53,15 @@ def update_config(cert_dest, key_dest):
 
     print(f"Updated environment file with new certificate paths.")
 
-
 def install_backend_dependencies():
     """Install Python dependencies for the backend."""
     print("Installing backend dependencies...")
     try:
         subprocess.run(["pip", "install", "-r", "backend/requirements.txt"], check=True)
-        print("backend dependencies installed successfully.")
+        print("Backend dependencies installed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Error installing backend dependencies: {e}")
         exit(1)
-
 
 def setup_frontend():
     """Install frontend dependencies and build the frontend."""
@@ -105,11 +73,10 @@ def setup_frontend():
         # Navigate to the frontend directory and install dependencies
         subprocess.run(["npm", "install"], cwd="frontend/bridge-ui", check=True)
         subprocess.run(["npm", "run", "build"], cwd="frontend/bridge-ui", check=True)
-        print("frontend setup and build complete.")
+        print("Frontend setup and build complete.")
     except subprocess.CalledProcessError as e:
         print(f"Error setting up frontend: {e}")
         exit(1)
-
 
 def setup_flask_app():
     """Set up the Flask application environment and database."""
@@ -136,44 +103,24 @@ def setup_flask_app():
         print(f"Error setting up Flask application: {e}")
         exit(1)
 
-
 def main():
     print("Welcome to the Bridge App Installer")
 
-    # Ask the user if they want to provide SSL certificates or generate self-signed ones
-    choice = input("Do you want to provide your own SSL certificates? (y/n): ").strip().lower()
+    # Step 1: Install mkcert if necessary
+    install_mkcert()
 
-    if choice == 'y':
-        # Ask the user for the location of their SSL certificate and key
-        cert_path = input("Enter the full path to your SSL certificate file: ").strip()
-        key_path = input("Enter the full path to your SSL key file: ").strip()
+    # Step 2: Generate mkcert certificates for localhost
+    create_cert_directory()
+    generate_mkcert_cert()
 
-        # Validate the provided paths
-        if not os.path.exists(cert_path):
-            print(f"Error: SSL certificate not found at {cert_path}")
-            return
-        if not os.path.exists(key_path):
-            print(f"Error: SSL key not found at {key_path}")
-            return
-
-        # Create the Certs directory and copy the certificates
-        create_cert_directory()
-        copy_certificates(cert_path, key_path)
-
-    else:
-        # If the user chooses not to provide their own certificate, generate a self-signed certificate
-        create_cert_directory()
-        generate_self_signed_cert()
-
-    # Install dependencies and setup backend and frontend
+    # Step 3: Install dependencies and set up backend and frontend
     install_backend_dependencies()
     setup_frontend()
 
-    # Set up the Flask application and database
+    # Step 4: Set up the Flask application and database
     setup_flask_app()
 
     print("Installation complete! SSL certificates and application have been set up.")
-
 
 if __name__ == "__main__":
     main()

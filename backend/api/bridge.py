@@ -36,6 +36,6 @@ def not_found(e):
     return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
-    cert_file = 'backend/api/Certs/self-signed-cert.pem'
-    key_file = 'backend/api/Certs/self-signed-key.pem'
+    cert_file = 'backend/api/Certs/localhost.pem'
+    key_file = 'backend/api/Certs/localhost-key.pem'
     app.run(host='0.0.0.0', port=5000, ssl_context=(cert_file, key_file))
