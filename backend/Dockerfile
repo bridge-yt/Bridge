@@ -5,8 +5,8 @@ FROM node:14 AS build
 WORKDIR /app/frontend
 
 # Copy frontend files
-COPY Frontend/bridge-ui/package*.json ./
-COPY Frontend/bridge-ui/ ./
+COPY frontend/bridge-ui/package*.json ./
+COPY frontend/bridge-ui/ ./
 
 # Install dependencies and build the React app
 RUN npm install
@@ -24,14 +24,14 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y gunicorn
 
 # Install Python dependencies
-COPY Backend/requirements.txt requirements.txt
+COPY backend/requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 # Copy the backend application code
-COPY Backend .
+COPY backend .
 
 # Copy built frontend files from the previous stage
-COPY --from=build /app/frontend/build /app/Frontend/bridge-ui/build
+COPY --from=build /app/frontend/build /app/frontend/bridge-ui/build
 
 # Set environment variables for Flask
 ENV FLASK_APP=api.bridge:app

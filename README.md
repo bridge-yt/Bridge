@@ -104,14 +104,14 @@ source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 3. **Install Dependencies**:
 
 ```bash
-pip install -r Backend/requirements.txt
+pip install -r backend/requirements.txt
 
 ```
-For FrontEnd
+For frontend
 ```
 export NODE_OPTIONS=--openssl-legacy-provider
 
-cd Frontend/bridge-ui
+cd frontend/bridge-ui
 npm install
 npm run build
 cd ../../
@@ -124,7 +124,7 @@ cd ../../
 1. **Run the Flask Application**:
 
 ```bash
-export FLASK_APP=Backend.api.bridge
+export FLASK_APP=backend.api.bridge
 export FLASK_ENV=development
 
 ```
